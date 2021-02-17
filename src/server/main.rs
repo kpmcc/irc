@@ -3,12 +3,23 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
 use std::thread;
 
+fn handle_message(msg: &str, mut stream: &TcpStream) {
+    stream.write(msg.as_bytes()).unwrap();
+}
+
 fn handle_client(mut stream: TcpStream) {
     let mut data = [0 as u8; 50]; // using 50 byte buffer
     while match stream.read(&mut data) {
         Ok(size) => {
             // echo everything!
-            stream.write(&data[0..size]).unwrap();
+            match str::from_utf8(&data[0..size]) {
+                Ok(d) => {
+                    handle_message(d, &stream);
+                }
+                Err(e) => {
+                    println!("Error {}", e);
+                }
+            }
             true
         }
         Err(_) => {
