@@ -11,7 +11,9 @@ fn handle_message(msg: &str, mut stream: &TcpStream) {
         command: "foo".to_string(),
         text: msg.to_string(),
     };
-    println!("Message text: {}", x.text);
+    if !x.text.is_empty() {
+        println!("Message text: {}", x.text);
+    }
     stream.write_all(msg.as_bytes()).unwrap();
 }
 
