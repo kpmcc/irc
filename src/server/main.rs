@@ -12,11 +12,11 @@ fn handle_message(msg: &str, mut stream: &TcpStream) {
         text: msg.to_string(),
     };
     println!("Message text: {}", x.text);
-    stream.write(msg.as_bytes()).unwrap();
+    stream.write_all(msg.as_bytes()).unwrap();
 }
 
 fn handle_client(mut stream: TcpStream) {
-    let mut data = [0 as u8; 50]; // using 50 byte buffer
+    let mut data = [0_u8; 50]; // using 50 byte buffer
     while match stream.read(&mut data) {
         Ok(size) => {
             // echo everything!
