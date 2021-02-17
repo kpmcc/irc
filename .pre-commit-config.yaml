@@ -20,5 +20,5 @@ repos:
         name: clippy
         language: system
         types: [file, rust]
-        entry: cargo clippy
+        entry: cargo clippy --all -- -D warnings
         pass_filenames: false
