@@ -11,7 +11,7 @@ fn main() -> std::io::Result<()> {
         Ok(size) => {
             match str::from_utf8(&data) {
                 Ok(hello) => {
-                    println!("working {}", hello); 
+                    println!("working {:?}", size); 
                 }
                 Err(_) => {
                     println!("Error parsing data");
