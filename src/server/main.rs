@@ -3,7 +3,15 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
 use std::thread;
 
+mod message;
+use crate::message::Message;
+
 fn handle_message(msg: &str, mut stream: &TcpStream) {
+    let x = Message {
+        command: "foo".to_string(),
+        text: msg.to_string(),
+    };
+    println!("Message text: {}", x.text);
     stream.write(msg.as_bytes()).unwrap();
 }
 
