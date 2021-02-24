@@ -4,16 +4,11 @@ use std::str;
 use std::thread;
 
 mod message;
-use crate::message::Message;
+use crate::message::parse_message;
 
 fn handle_message(msg: &str, mut stream: &TcpStream) {
-    let x = Message {
-        command: "foo".to_string(),
-        text: msg.to_string(),
-    };
-    if !x.text.is_empty() {
-        println!("Message text: {}", x.text);
-    }
+    let m = parse_message(msg);
+    println!("Message {:#?}", m);
     stream.write_all(msg.as_bytes()).unwrap();
 }
 
