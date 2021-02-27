@@ -4,12 +4,25 @@ use std::str;
 use std::thread;
 
 mod message;
+mod client;
 use crate::message::parse_message;
+use crate::message::Message;
+use crate::client::build_client;
+
 
 fn handle_message(msg: &str, mut stream: &TcpStream) {
     let m = parse_message(msg);
     println!("Message {:#?}", m);
     stream.write_all(msg.as_bytes()).unwrap();
+
+    // TODO how will we manage a shared client map? idk how locks work in rust
+    if let Message::Nickname(nick) = m {
+        let mut client = build_client(nick);
+
+        println!("Creating client {} -> nick {}", stream.peer_addr().unwrap(), client.get_nick());        
+        // Unnecessary, just tryin stuff out
+        client.update_nick(String::from("nick_reset"));
+    }
 }
 
 fn handle_client(mut stream: TcpStream) {
