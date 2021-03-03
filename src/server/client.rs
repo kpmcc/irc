@@ -9,9 +9,10 @@ impl Client {
         &self.nick
     }
 
-    pub fn update_nick(&mut self, nick: String) {
-        self.nick = nick
-    }
+    // complains about unused fns
+    //pub fn update_nick(&mut self, nick: String) {
+    //    self.nick = nick
+    //}
 }
 
 impl Drop for Client {
