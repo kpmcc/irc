@@ -10,6 +10,7 @@ mod client;
 mod message;
 mod channel;
 use crate::client::build_client;
+use crate::message::Message;
 use crate::message::parse_message;
 use crate::channel::build_channel;
 
@@ -23,9 +24,10 @@ fn handle_message(msg: &str, mut stream: &TcpStream) {
         let mut client = build_client(nick.to_string());
 
         println!(
-            "Creating client {} -> nick {}",
+            "Creating client {} -> nick {} mode {}",
             stream.peer_addr().unwrap(),
-            client.get_nick()
+            client.get_nick(),
+            client.get_mode()
         );
         // Unnecessary, just tryin stuff out
         client.update_nick(String::from("nick_reset"));
