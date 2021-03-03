@@ -37,8 +37,12 @@ fn handle_message(
                 println!("Existing nick not found?");
             }
         } else {
-            let client = build_client(nick.to_string());
+            if client_map.contains_key(nick) {
+                println!("Nickname {} is already taken!", nick);
+                return;
+            }
 
+            let client = build_client(nick.to_string());
             println!(
                 "Creating client {} -> nick {} mode {}",
                 stream.peer_addr().unwrap(),
