@@ -15,3 +15,4 @@ name = "server"
 path = "src/server/main.rs"
 
 [dependencies]
+bitflags = "1.0"

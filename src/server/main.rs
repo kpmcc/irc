@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate bitflags;
+
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
@@ -5,8 +8,10 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
+mod channel;
 mod client;
 mod message;
+use crate::channel::build_channel;
 use crate::client::build_client;
 use crate::client::Client;
 use crate::message::parse_message;
@@ -18,13 +23,14 @@ fn handle_message(msg: &str, mut stream: &TcpStream, client_map: &mut HashMap<St
     stream.write_all(msg.as_bytes()).unwrap();
 
     // TODO how will we manage a shared client map? idk how locks work in rust
-    if let Message::Nickname(nick) = m {
-        let client = build_client(nick);
+    if let Message::Nickname(nick) = &m {
+        let client = build_client(nick.to_string());
 
         println!(
-            "Creating client {} -> nick {}",
+            "Creating client {} -> nick {} mode {}",
             stream.peer_addr().unwrap(),
-            client.get_nick()
+            client.get_nick(),
+            client.get_mode()
         );
 
         client_map.insert(client.get_nick().to_string(), client);
@@ -32,6 +38,13 @@ fn handle_message(msg: &str, mut stream: &TcpStream, client_map: &mut HashMap<St
         println!("full client map");
         for (key, value) in client_map {
             println!("{} -> {}", key, value.get_nick());
+        }
+    }
+
+    if let Message::Join(channels, _) = m {
+        for _ in channels.iter() {
+            let channel = build_channel(["nick".to_string()].to_vec());
+            println!("Created channel {:#?}", channel);
         }
     }
 }
