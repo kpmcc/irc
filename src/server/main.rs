@@ -1,12 +1,12 @@
 #[macro_use]
 extern crate bitflags;
 
+use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
-use std::thread;
 use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
+use std::thread;
 
 mod channel;
 mod client;
@@ -22,7 +22,6 @@ fn handle_message(msg: &str, mut stream: &TcpStream, client_map: &mut HashMap<St
     println!("Message {:#?}", m);
     stream.write_all(msg.as_bytes()).unwrap();
 
-    // TODO how will we manage a shared client map? idk how locks work in rust
     if let Message::Nickname(nick) = &m {
         let client = build_client(nick.to_string());
 
@@ -78,7 +77,7 @@ fn handle_client(mut stream: TcpStream, client_clone: Arc<Mutex<HashMap<String, 
                 stream.shutdown(Shutdown::Both).unwrap();
                 break;
             }
-        } 
+        }
     }
 }
 
