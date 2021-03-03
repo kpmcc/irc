@@ -3,12 +3,11 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
 use std::thread;
 
-mod message;
 mod client;
+mod message;
+use crate::client::build_client;
 use crate::message::parse_message;
 use crate::message::Message;
-use crate::client::build_client;
-
 
 fn handle_message(msg: &str, mut stream: &TcpStream) {
     let m = parse_message(msg);
@@ -19,7 +18,11 @@ fn handle_message(msg: &str, mut stream: &TcpStream) {
     if let Message::Nickname(nick) = m {
         let mut client = build_client(nick);
 
-        println!("Creating client {} -> nick {}", stream.peer_addr().unwrap(), client.get_nick());        
+        println!(
+            "Creating client {} -> nick {}",
+            stream.peer_addr().unwrap(),
+            client.get_nick()
+        );
         // Unnecessary, just tryin stuff out
         client.update_nick(String::from("nick_reset"));
     }

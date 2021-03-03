@@ -1,7 +1,7 @@
 // Track attributes of a single client
 
 pub struct Client {
-    nick: String
+    nick: String,
 }
 
 impl Client {
@@ -21,7 +21,5 @@ impl Drop for Client {
 }
 
 pub fn build_client(nick: String) -> Client {
-    Client {
-        nick
-    }
+    Client { nick }
 }
