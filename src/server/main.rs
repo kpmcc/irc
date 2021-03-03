@@ -6,13 +6,13 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::str;
 use std::thread;
 
+mod channel;
 mod client;
 mod message;
-mod channel;
-use crate::client::build_client;
-use crate::message::Message;
-use crate::message::parse_message;
 use crate::channel::build_channel;
+use crate::client::build_client;
+use crate::message::parse_message;
+use crate::message::Message;
 
 fn handle_message(msg: &str, mut stream: &TcpStream) {
     let m = parse_message(msg);

@@ -19,7 +19,7 @@ impl fmt::Display for UserMode {
 
 pub struct Client {
     nick: String,
-    mode: UserMode
+    mode: UserMode,
 }
 
 impl Client {
@@ -45,6 +45,6 @@ impl Drop for Client {
 pub fn build_client(nick: String) -> Client {
     Client {
         nick,
-        mode: UserMode { bits: 0 }
+        mode: UserMode { bits: 0 },
     }
 }

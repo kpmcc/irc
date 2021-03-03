@@ -9,7 +9,6 @@ bitflags! {
     }
 }
 
-
 #[derive(Debug)]
 pub struct Channel {
     users: Vec<String>,
@@ -18,7 +17,7 @@ pub struct Channel {
     topic: String,
     key: String,
     mode: ChannelMode,
-    user_limit: u32
+    user_limit: u32,
 }
 
 pub fn build_channel(users: Vec<String>) -> Channel {
@@ -29,6 +28,6 @@ pub fn build_channel(users: Vec<String>) -> Channel {
         topic: "topic".to_string(),
         key: "supersecretpassword".to_string(),
         mode: ChannelMode { bits: 0 },
-        user_limit: 1
+        user_limit: 1,
     }
 }

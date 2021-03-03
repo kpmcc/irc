@@ -34,16 +34,19 @@ pub fn parse_message(msg: &str) -> Message {
         Some("JOIN") => {
             let channels: Vec<_> = match it.next() {
                 Some(chans) => chans.split(',').collect(),
-                _ => [].to_vec()
+                _ => [].to_vec(),
             };
             let keys: Vec<_> = match it.next() {
                 Some(ks) => ks.split(',').collect(),
-                _ => [].to_vec()
+                _ => [].to_vec(),
             };
             if channels.is_empty() {
                 Message::Err
             } else {
-                Message::Join(channels.iter().map(|x| x.to_string()).collect(), keys.iter().map(|x| x.to_string()).collect())
+                Message::Join(
+                    channels.iter().map(|x| x.to_string()).collect(),
+                    keys.iter().map(|x| x.to_string()).collect(),
+                )
             }
         }
         Some("PRIVMSG") => {
