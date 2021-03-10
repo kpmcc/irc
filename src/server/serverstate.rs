@@ -1,34 +1,33 @@
-use std::sync::{Arc, Mutex};
-use std::net::{Shutdown, TcpStream};
-use std::thread;
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::net::{Shutdown, TcpStream};
 use std::str;
-
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 use crate::to_clrf_reader_writer::ToClrfReaderWriter;
 
-use crate::message::Message;
-use crate::message::parse_message;
-use crate::channel::Channel;
 use crate::channel::build_channel;
-use crate::client::Client;
+use crate::channel::Channel;
 use crate::client::build_client;
+use crate::client::Client;
+use crate::message::parse_message;
+use crate::message::Message;
 
 pub struct ServerState {
-    client_mutex : Arc<Mutex<HashMap<String, Client>>>,
-    channel_mutex : Arc<Mutex<HashMap<String, Channel>>>,
+    client_mutex: Arc<Mutex<HashMap<String, Client>>>,
+    channel_mutex: Arc<Mutex<HashMap<String, Channel>>>,
 }
 
 impl ServerState {
     pub fn new() -> ServerState {
-        let client_map: HashMap<String, Client>  = HashMap::new();
+        let client_map: HashMap<String, Client> = HashMap::new();
         let channel_map: HashMap<String, Channel> = HashMap::new();
         let client_mutex: Arc<Mutex<HashMap<String, Client>>> = Arc::new(Mutex::new(client_map));
         let channel_mutex: Arc<Mutex<HashMap<String, Channel>>> = Arc::new(Mutex::new(channel_map));
         ServerState {
             client_mutex,
-            channel_mutex
+            channel_mutex,
         }
     }
 
@@ -40,10 +39,14 @@ impl ServerState {
         Arc::clone(&self.channel_mutex)
     }
 
-    fn handle_client(mut stream: TcpStream, client_clone: Arc<Mutex<HashMap<String, Client>>>, channel_clone: Arc<Mutex<HashMap<String, Channel>>>) -> Result<(), String>  {
+    fn handle_client(
+        mut stream: &mut TcpStream,
+        client_clone: Arc<Mutex<HashMap<String, Client>>>,
+        channel_clone: Arc<Mutex<HashMap<String, Channel>>>,
+    ) -> Result<(), String> {
         let mut data = [0_u8; 50]; // using 50 byte buffer
         let mut nick = String::new();
-        let mut stream = ToClrfReaderWriter::new(&mut stream)
+        let mut stream = ToClrfReaderWriter::new(&mut stream);
         loop {
             match stream.read(&mut data) {
                 Ok(size) => {
@@ -56,11 +59,15 @@ impl ServerState {
                     // echo everything!
                     match str::from_utf8(&data[0..size]) {
                         Ok(d) => {
-                            ServerState::handle_message(d, &stream, &mut *client_data, &mut *channel_data, &mut nick);
+                            ServerState::handle_message(
+                                d,
+                                &mut stream,
+                                &mut *client_data,
+                                &mut *channel_data,
+                                &mut nick,
+                            );
                         }
-                        Err(e) => {
-                            return Err(format!("{}", e))
-                        }
+                        Err(e) => return Err(format!("{}", e)),
                     }
                 }
                 Err(e) => {
@@ -78,7 +85,7 @@ impl ServerState {
 
     fn handle_message<T: Write>(
         msg: &str,
-        mut stream: &T,
+        stream: &mut T,
         client_map: &mut HashMap<String, Client>,
         channel_map: &mut HashMap<String, Channel>,
         nick_ref: &mut String,
@@ -104,8 +111,7 @@ impl ServerState {
 
                 let client = build_client(nick.to_string());
                 println!(
-                    "Creating client {} -> nick {} mode {}",
-                    stream.peer_addr().unwrap(),
+                    "Creating client; -> nick {} mode {}",
                     client.get_nick(),
                     client.get_mode()
                 );
@@ -129,24 +135,21 @@ impl ServerState {
         }
     }
 
-    pub fn handle_incoming_client(&self, stream: TcpStream) {
-        println!("New connection: {}", stream.peer_addr().unwrap());
+    pub fn handle_incoming_client(&self, mut stream: TcpStream) {
+        let peer_addr = stream.peer_addr().unwrap();
+        println!("New connection: {}", peer_addr);
         let client_clone = self.get_client_map();
         let channel_clone = self.get_channel_map();
         thread::spawn(move || {
             // connection succeeded
-            match ServerState::handle_client(stream, client_clone, channel_clone) {
+            match ServerState::handle_client(&mut stream, client_clone, channel_clone) {
                 Ok(_) => {
-                    println!(
-                        "Terminating connection with {} without error",
-                        peer_addr,
-                    );
-                },
+                    println!("Terminating connection with {} without error", peer_addr,);
+                }
                 Err(e) => {
                     println!(
                         "An error occurred, terminating connection with {}: {}",
-                        peer_addr,
-                        e,
+                        peer_addr, e,
                     );
                 }
             }

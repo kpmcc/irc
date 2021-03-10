@@ -1,4 +1,4 @@
-use std::io::{Read, Write, Result};
+use std::io::{Read, Result, Write};
 
 // Size of the internal buffer. The larger this is, the fewer calls to the
 // source's `read` method need to be made.
@@ -6,7 +6,7 @@ const BUF_SIZE: usize = 1024;
 
 /// A wrapper around a `source` implementing `Read` and `Write`. The `Read` implementation reads a
 /// message up to \r\n, while the `Write` implementation delegates directly to the wrapped source.
-pub struct ToClrfReaderWriter<'a, T: Read + Write>  {
+pub struct ToClrfReaderWriter<'a, T: Read + Write> {
     // constraint: last_written >= last_read
     buf: [u8; BUF_SIZE],
     source: &'a mut T,
@@ -34,10 +34,10 @@ impl<T: Read + Write> Read for ToClrfReaderWriter<'_, T> {
                 let b = self.buf[self.read_next];
                 self.read_next += 1;
                 buf[i] = b;
-                if b == '\n' as u8 && cr_seen {
+                if b == b'\n' && cr_seen {
                     return Ok(i + 1);
                 }
-                cr_seen = b == '\r' as u8;
+                cr_seen = b == b'\r';
                 i += 1;
             }
 
@@ -58,9 +58,9 @@ impl<T: Read + Write> Write for ToClrfReaderWriter<'_, T> {
     }
 }
 
-#[cfg (test)]
+#[cfg(test)]
 mod tests {
-    use std::io::{Read, Write, Result};
+    use std::io::{Read, Result, Write};
 
     struct TestReadWrite {
         data: Vec<Vec<u8>>,
@@ -69,10 +69,7 @@ mod tests {
 
     impl TestReadWrite {
         pub fn new(data: Vec<Vec<u8>>) -> TestReadWrite {
-            TestReadWrite {
-                data,
-                index: 0,
-            }
+            TestReadWrite { data, index: 0 }
         }
     }
 
@@ -100,11 +97,7 @@ mod tests {
         let mut reader = TestReadWrite::new(vec![b"foo\r\nba".to_vec(), b"r\r\nbaz\r\nq".to_vec()]);
         let mut cb = super::ToClrfReaderWriter::new(&mut reader);
         let mut dst = [0; 5];
-        let expected_arr = vec![
-            b"foo\r\n",
-            b"bar\r\n",
-            b"baz\r\n",
-        ];
+        let expected_arr = vec![b"foo\r\n", b"bar\r\n", b"baz\r\n"];
         for expected in expected_arr.iter() {
             cb.read(&mut dst).unwrap();
             assert_eq!(dst.len(), expected.len());

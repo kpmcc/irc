@@ -3,10 +3,10 @@ extern crate bitflags;
 
 use std::net::TcpListener;
 mod channel;
-mod to_clrf_reader_writer;
 mod client;
 mod message;
 mod serverstate;
+mod to_clrf_reader_writer;
 
 use crate::serverstate::ServerState;
 
@@ -18,9 +18,7 @@ fn main() {
     let server = ServerState::new();
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => {
-                server.handle_incoming_client(stream)
-            }
+            Ok(stream) => server.handle_incoming_client(stream),
             Err(e) => {
                 println!("Error: {}", e);
                 /* connection failed */
