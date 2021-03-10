@@ -9,17 +9,19 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 mod channel;
+mod to_clrf_reader_writer;
 mod client;
 mod message;
 use crate::channel::build_channel;
+use crate::to_clrf_reader_writer::ToClrfReaderWriter;
 use crate::client::build_client;
 use crate::client::Client;
 use crate::message::parse_message;
 use crate::message::Message;
 
-fn handle_message(
+fn handle_message<T: Write>(
     msg: &str,
-    mut stream: &TcpStream,
+    stream: &mut T,
     client_map: &mut HashMap<String, Client>,
     nick_ref: &mut String,
 ) {
@@ -43,12 +45,6 @@ fn handle_message(
             }
 
             let client = build_client(nick.to_string());
-            println!(
-                "Creating client {} -> nick {} mode {}",
-                stream.peer_addr().unwrap(),
-                client.get_nick(),
-                client.get_mode()
-            );
 
             client_map.insert(client.get_nick().to_string(), client);
         }
@@ -68,9 +64,10 @@ fn handle_message(
     }
 }
 
-fn handle_client(mut stream: TcpStream, client_clone: Arc<Mutex<HashMap<String, Client>>>) {
+fn handle_client(mut stream: &mut TcpStream, client_clone: Arc<Mutex<HashMap<String, Client>>>) -> Result<(), String> {
     let mut data = [0_u8; 50]; // using 50 byte buffer
     let mut nick = String::new();
+    let mut stream = ToClrfReaderWriter::new(&mut stream);
     loop {
         match stream.read(&mut data) {
             Ok(size) => {
@@ -79,24 +76,18 @@ fn handle_client(mut stream: TcpStream, client_clone: Arc<Mutex<HashMap<String, 
                     break;
                 }
 
-                // echo everything!
+                // echo everything, returning error if decoding failed
                 match str::from_utf8(&data[0..size]) {
                     Ok(d) => {
-                        handle_message(d, &stream, &mut *client_data, &mut nick);
-                    }
+                        handle_message(d, &mut stream, &mut *client_data, &mut nick);
+                    },
                     Err(e) => {
-                        println!("Error {}", e);
-                        break;
+                        return Err(format!("{}", e));
                     }
                 }
-            }
-            Err(_) => {
-                println!(
-                    "An error occurred, terminating connection with {}",
-                    stream.peer_addr().unwrap()
-                );
-                stream.shutdown(Shutdown::Both).unwrap();
-                break;
+            },
+            Err(e) => {
+                return Err(format!("{}", e));
             }
         }
     }
@@ -105,6 +96,7 @@ fn handle_client(mut stream: TcpStream, client_clone: Arc<Mutex<HashMap<String, 
         let mut client_data = client_clone.lock().unwrap();
         client_data.remove(&nick);
     }
+    Ok(())
 }
 
 fn main() {
@@ -118,11 +110,27 @@ fn main() {
     for stream in listener.incoming() {
         let client_clone = Arc::clone(&mutex);
         match stream {
-            Ok(stream) => {
-                println!("New connection: {}", stream.peer_addr().unwrap());
+            Ok(mut stream) => {
+                let peer_addr = stream.peer_addr().unwrap();
+                println!("New connection: {}", peer_addr);
                 thread::spawn(move || {
                     // connection succeeded
-                    handle_client(stream, client_clone)
+                    match handle_client(&mut stream, client_clone) {
+                        Ok(_) => {
+                            println!(
+                                "Terminating connection with {} without error",
+                                peer_addr,
+                            );
+                        },
+                        Err(e) => {
+                            println!(
+                                "An error occurred, terminating connection with {}: {}",
+                                peer_addr,
+                                e,
+                            );
+                        }
+                    }
+                    stream.shutdown(Shutdown::Both).unwrap();
                 });
             }
             Err(e) => {
