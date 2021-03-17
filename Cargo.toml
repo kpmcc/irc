@@ -16,3 +16,4 @@ path = "src/server/main.rs"
 
 [dependencies]
 bitflags = "1.0"
+structopt = "0.3.13"
